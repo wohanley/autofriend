@@ -1,5 +1,6 @@
 import cv2
-import os
+from os import listdir
+from os.path import isfile, join
 
 
 def load_face_detector():
@@ -21,7 +22,7 @@ def prepare_image(filename):
 
 def load_face_recognizer():
     recognizer = cv2.createLBPHFaceRecognizer()
-    if os.path.isfile(recognizer_path):
+    if isfile(recognizer_path):
         recognizer.load(recognizer_path)
     return recognizer
 
@@ -32,3 +33,11 @@ def update_recognizer(recognizer, updates):
     recognizer.update(
         [image for (image, _) in updates],
         [label for (_, label) in updates])
+
+
+def wohanley_updates():
+    wohanley_path = 'resources/wohanley'
+    for f in listdir(wohanley_path):
+        path = join(wohanley_path, f)
+        if isfile(path):
+            yield (prepare_image(path), 'wohanley')
