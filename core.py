@@ -4,6 +4,10 @@ from os import listdir
 from os.path import isfile, join
 
 
+def flatten(nested_list):
+    return [item for sublist in nested_list for item in sublist]
+
+
 def load_face_detector():
     return cv2.CascadeClassifier(
         'resources/haarcascade_frontalface_default.xml')
@@ -19,7 +23,7 @@ def face_regions(face_detector, image):
 
 
 def prepare_image(filename):
-    return cv2.cvtColor(cv2.imread(filename), cv2.COLOR_BGR2GRAY)
+    return cv2.imread(filename, cv2.CV_LOAD_IMAGE_GRAYSCALE)
 
 
 def load_face_recognizer():
@@ -29,7 +33,7 @@ def load_face_recognizer():
     if isfile(recognizer_path):
         recognizer.load(recognizer_path)
 
-        return recognizer
+    return recognizer
 
 recognizer_path = 'resources/recognizer'
 
