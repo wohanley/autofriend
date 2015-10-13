@@ -6,6 +6,7 @@ import cv2
 import FaceRecognizer
 from functools import partial
 import requests
+from store import Store
 from twitterbot import TwitterBot
 
 
@@ -22,6 +23,7 @@ class Autofriend(TwitterBot):
         ############################
         # REQUIRED: LOGIN DETAILS! #
         ############################
+
         self.config['api_key'] = ''
         self.config['api_secret'] = ''
         self.config['access_key'] = ''
@@ -56,32 +58,32 @@ class Autofriend(TwitterBot):
 
         self.face_recognizer = FaceRecognizer()
 
-        # If you'd like to save variables with the bot's state, use the
-        # self.state dictionary. These will only be initialized if the bot is
-        # not loading a previous saved state.
-
-        # self.state['butt_counter'] = 0
-
-        # You can also add custom functions that run at regular intervals
-        # using self.register_custom_handler(function, interval).
-        #
-        # For instance, if your normal timeline tweet interval is every 30
-        # minutes, but you'd also like to post something different every 24
-        # hours, you would implement self.my_function and add the following
-        # line here:
-        
-        # self.register_custom_handler(self.my_function, 60 * 60 * 24)
+        self.store = Store()
 
     def on_scheduled_tweet(self):
         pass
 
+    def on_follow(self, follower_id):
+
+        super(Autofriend, self).on_follow(follower_id)
+
+        follower = self.api.get_user(follower_id)
+
+        self.store.save_friend((follower['screen_name'],))
+
     def on_mention(self, tweet, prefix):
+
+        mentioning_friend = self.store.get_twitter_friend(
+            tweet.user['screen_name'])
 
         photos = get_photos_from_tweet(tweet)
 
         prepared_images = [cv2.imdecode(photo, cv2.CV_LOAD_IMAGE_GRAYSCALE)
                            for photo in photos]
 
+        self.recognizer.update([(pi, mentioning_friend[0])
+                                for pi in prepared_images])
+        
     def on_timeline(self, tweet, prefix):
         """
         Defines actions to take on a timeline tweet.
@@ -120,6 +122,11 @@ class Autofriend(TwitterBot):
             recognitions)
 
         recognized_labels = set([label for (label, _) in likely_recognitions])
+
+        for label in recognized_labels:
+            recognized = self.store.get_friend(label)
+            self.post_tweet('@' + recognized[1] + 'you look great',
+                            reply_to=tweet)
 
 
 if __name__ == '__main__':
