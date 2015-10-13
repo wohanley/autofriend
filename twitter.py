@@ -6,6 +6,7 @@ import cv2
 from facerec import FaceRecognizer
 from functools import partial
 import os
+import psycopg2 as pg
 import requests
 from store import Store
 from twitterbot import TwitterBot
@@ -68,21 +69,23 @@ class Autofriend(TwitterBot):
 
         super(Autofriend, self).on_follow(follower_id)
 
-        follower = self.api.get_user(follower_id)
-
-        self.store.save_friend((follower['screen_name'],))
+        try:
+            self.store.save_friend((follower_id,))
+        except pg.IntegrityError:
+            # aborting is harmless, most likely an unfollow/refollow
+            self.log("tried to add duplicate twitter friend %s" % follower_id)
 
     def on_mention(self, tweet, prefix):
 
         mentioning_friend = self.store.get_twitter_friend(
-            tweet.user['screen_name'])
+            tweet.user['id'])
 
         photos = get_photos_from_tweet(tweet)
 
         prepared_images = [cv2.imdecode(photo, cv2.CV_LOAD_IMAGE_GRAYSCALE)
                            for photo in photos]
 
-        self.recognizer.update([(pi, mentioning_friend[0])
+        self.recognizer.update([(pi, mentioning_friend['id'])
                                 for pi in prepared_images])
         
     def on_timeline(self, tweet, prefix):
@@ -102,13 +105,6 @@ class Autofriend(TwitterBot):
         When calling post_tweet, you MUST include reply_to=tweet, or
         Twitter won't count it as a reply.
         """
-        # text = function_that_returns_a_string_goes_here()
-        # prefixed_text = prefix + ' ' + text
-        # self.post_tweet(prefix + ' ' + text, reply_to=tweet)
-
-        # call this to fav the tweet!
-        # if something:
-        #     self.favorite_tweet(tweet)
 
         photos = get_photos_from_tweet(tweet)
 
@@ -126,8 +122,13 @@ class Autofriend(TwitterBot):
 
         for label in recognized_labels:
             recognized = self.store.get_friend(label)
-            self.post_tweet('@' + recognized[1] + 'you look great',
-                            reply_to=tweet)
+            # it's possible someone is in the model but not in the database
+            if recognized and recognized.get('twitter_id', None):
+                twitter_friend = self.api.get_user(recognized['twitter_id'])
+                self.post_tweet(
+                    '@' + twitter_friend['screen_name'] +
+                    ' you look great',
+                    reply_to=tweet)
 
 
 if __name__ == '__main__':
