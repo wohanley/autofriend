@@ -1,5 +1,5 @@
 import cv2
-import np
+import numpy as np
 from os.path import isfile
 
 

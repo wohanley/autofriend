@@ -3,8 +3,9 @@
 
 import core
 import cv2
-import FaceRecognizer
+from facerec import FaceRecognizer
 from functools import partial
+import os
 import requests
 from store import Store
 from twitterbot import TwitterBot
@@ -24,10 +25,10 @@ class Autofriend(TwitterBot):
         # REQUIRED: LOGIN DETAILS! #
         ############################
 
-        self.config['api_key'] = ''
-        self.config['api_secret'] = ''
-        self.config['access_key'] = ''
-        self.config['access_secret'] = ''
+        self.config['api_key'] = os.environ['TWITTER_API_KEY']
+        self.config['api_secret'] = os.environ['TWITTER_API_SECRET']
+        self.config['access_key'] = os.environ['TWITTER_ACCESS_KEY']
+        self.config['access_secret'] = os.environ['TWITTER_ACCESS_SECRET']
 
         ######################################
         # SEMI-OPTIONAL: OTHER CONFIG STUFF! #
