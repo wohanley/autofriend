@@ -3,12 +3,19 @@
 
 import core
 import cv2
+import FaceRecognizer
 from functools import partial
 import requests
 from twitterbot import TwitterBot
 
 
-class MyTwitterBot(TwitterBot):
+def get_photos_from_tweet(tweet):
+    return [requests.get(m["media_url"])
+            for m in tweet.entities.get("media", [])
+            if m.get("type", None) == "photo"]
+
+
+class Autofriend(TwitterBot):
 
     def bot_init(self):
 
@@ -47,9 +54,7 @@ class MyTwitterBot(TwitterBot):
             core.face_regions,
             core.load_face_detector())
 
-        self.recognize_face = partial(
-            core.recognize_face,
-            core.load_face_recognizer())
+        self.face_recognizer = FaceRecognizer()
 
         # If you'd like to save variables with the bot's state, use the
         # self.state dictionary. These will only be initialized if the bot is
@@ -71,7 +76,11 @@ class MyTwitterBot(TwitterBot):
         pass
 
     def on_mention(self, tweet, prefix):
-        pass
+
+        photos = get_photos_from_tweet(tweet)
+
+        prepared_images = [cv2.imdecode(photo, cv2.CV_LOAD_IMAGE_GRAYSCALE)
+                           for photo in photos]
 
     def on_timeline(self, tweet, prefix):
         """
@@ -98,16 +107,13 @@ class MyTwitterBot(TwitterBot):
         # if something:
         #     self.favorite_tweet(tweet)
 
-        photos = [m for m in tweet.entities.get("media", [])
-                  if m.get("type", None) == "photo"]
-
-        prepared_images = [cv2.imdecode(requests.get(photo["media_url"]))
-                           for photo in photos]
+        photos = get_photos_from_tweet(tweet)
 
         face_regions = core.flatten(
-            [self.face_regions(image) for image in prepared_images])
+            [self.face_regions(photo) for photo in photos])
 
-        recognitions = [self.recognize_face(region) for region in face_regions]
+        recognitions = [self.recognizer.recognize_face(region)
+                        for region in face_regions]
 
         likely_recognitions = filter(
             lambda (_, probability): probability > 75,
@@ -117,5 +123,4 @@ class MyTwitterBot(TwitterBot):
 
 
 if __name__ == '__main__':
-    bot = MyTwitterBot()
-    bot.run()
+    Autofriend().run()
