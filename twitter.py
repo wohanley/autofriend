@@ -89,7 +89,7 @@ class Autofriend(TwitterBot):
                            for photo in photos]
 
         self.face_recognizer.update([(pi, mentioning_friend['id'])
-                                for pi in prepared_images])
+                                     for pi in prepared_images])
         
     def on_timeline(self, tweet, prefix):
         """
