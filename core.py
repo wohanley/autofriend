@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 from os import listdir
 from os.path import isfile, join
 
@@ -19,6 +20,10 @@ def face_regions(face_detector, image):
         scaleFactor=1.3,
         minNeighbors=8,
         minSize=(20, 20))
+
+
+def decode(imageData):
+    return cv2.imdecode(np.array(imageData), cv2.CV_LOAD_IMAGE_GRAYSCALE)
 
 
 def prepare_image(filename):

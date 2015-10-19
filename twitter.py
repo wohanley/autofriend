@@ -5,6 +5,8 @@ import core
 import cv2
 from facerec import FaceRecognizer
 from functools import partial
+import logging
+import numpy as np
 import os
 import psycopg2 as pg
 import requests
@@ -13,7 +15,8 @@ from twitterbot import TwitterBot
 
 
 def get_photos_from_tweet(tweet):
-    return [requests.get(m["media_url"])
+    return [core.decode(np.frombuffer(requests.get(m["media_url"]).content,
+                                      np.uint8))
             for m in tweet.entities.get("media", [])
             if m.get("type", None) == "photo"]
 
@@ -67,7 +70,7 @@ class Autofriend(TwitterBot):
 
     def on_follow(self, follower_id):
 
-        super(Autofriend, self).on_follow(follower_id)
+        TwitterBot.on_follow(self, follower_id)
 
         try:
             self.store.save_friend((follower_id,))
@@ -85,7 +88,7 @@ class Autofriend(TwitterBot):
         prepared_images = [cv2.imdecode(photo, cv2.CV_LOAD_IMAGE_GRAYSCALE)
                            for photo in photos]
 
-        self.recognizer.update([(pi, mentioning_friend['id'])
+        self.face_recognizer.update([(pi, mentioning_friend['id'])
                                 for pi in prepared_images])
         
     def on_timeline(self, tweet, prefix):
@@ -111,8 +114,12 @@ class Autofriend(TwitterBot):
         face_regions = core.flatten(
             [self.face_regions(photo) for photo in photos])
 
-        recognitions = [self.recognizer.recognize_face(region)
-                        for region in face_regions]
+        recognitions = []
+        for region in face_regions:
+            try:
+                self.face_recognizer.recognize_face(region)
+            except cv2.error as e:
+                logging.error("Error recognizing face region: " + e.message)
 
         likely_recognitions = filter(
             lambda (_, probability): probability > 75,
