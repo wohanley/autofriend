@@ -6,7 +6,6 @@ import cv2
 from facerec import FaceRecognizer
 from functools import partial
 import logging
-import numpy as np
 import os
 import psycopg2 as pg
 import requests
@@ -15,10 +14,14 @@ from twitterbot import TwitterBot
 
 
 def get_photos_from_tweet(tweet):
-    return [core.decode(np.frombuffer(requests.get(m["media_url"]).content,
-                                      np.uint8))
-            for m in tweet.entities.get("media", [])
-            if m.get("type", None) == "photo"]
+    photos = []
+    for m in tweet.entities.get('media', []):
+        if m.get('type', None) == 'photo':
+            with open('tempimg', 'wb') as f:
+                for chunk in requests.get(m['media_url']).iter_content():
+                    f.write(chunk)
+            photos.append(cv2.imread('tempimg', cv2.CV_LOAD_IMAGE_GRAYSCALE))
+    return photos
 
 
 class Autofriend(TwitterBot):
@@ -45,10 +48,10 @@ class Autofriend(TwitterBot):
         self.config['reply_followers_only'] = True
 
         # fav any tweets that mention this bot?
-        self.config['autofav_mentions'] = True
+        self.config['autofav_mentions'] = False
 
         # fav any tweets containing these keywords?
-        self.config['autofav_keywords'] = ["selfie"]
+        self.config['autofav_keywords'] = []
 
         # follow back all followers?
         self.config['autofollow'] = True
@@ -80,17 +83,14 @@ class Autofriend(TwitterBot):
 
     def on_mention(self, tweet, prefix):
 
-        mentioning_friend = self.store.get_twitter_friend(
-            tweet.user['id'])
-
         photos = get_photos_from_tweet(tweet)
 
         prepared_images = [cv2.imdecode(photo, cv2.CV_LOAD_IMAGE_GRAYSCALE)
                            for photo in photos]
 
-        self.face_recognizer.update([(pi, mentioning_friend['id'])
+        self.face_recognizer.update([(pi, tweet.from_user_id)
                                      for pi in prepared_images])
-        
+
     def on_timeline(self, tweet, prefix):
         """
         Defines actions to take on a timeline tweet.
@@ -114,16 +114,20 @@ class Autofriend(TwitterBot):
         face_regions = core.flatten(
             [self.face_regions(photo) for photo in photos])
 
+        print face_regions
+
         recognitions = []
         for region in face_regions:
             try:
-                self.face_recognizer.recognize_face(region)
+                recognitions.append(
+                    self.face_recognizer.recognize_face(region))
             except cv2.error as e:
                 logging.error("Error recognizing face region: " + e.message)
 
-        likely_recognitions = filter(
-            lambda (_, probability): probability > 75,
-            recognitions)
+        print recognitions
+
+        likely_recognitions = filter(lambda (_, margin): margin < 300,
+                                     recognitions)
 
         recognized_labels = set([label for (label, _) in likely_recognitions])
 
@@ -133,8 +137,9 @@ class Autofriend(TwitterBot):
             if recognized and recognized.get('twitter_id', None):
                 twitter_friend = self.api.get_user(recognized['twitter_id'])
                 self.post_tweet(
-                    '@' + twitter_friend['screen_name'] +
-                    ' you look great',
+                    prefix +
+                    ' you look great ' +
+                    '@' + twitter_friend.screen_name,
                     reply_to=tweet)
 
 

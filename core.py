@@ -15,15 +15,19 @@ def load_face_detector():
 
 def face_regions(face_detector, image):
 
-    return face_detector.detectMultiScale(
-        image,
-        scaleFactor=1.3,
-        minNeighbors=8,
-        minSize=(20, 20))
+    return [image[y: y + height, x: x + width]
+            for (x, y, width, height) in face_detector.detectMultiScale(
+                image,
+                scaleFactor=1.3,
+                minNeighbors=8,
+                minSize=(20, 20))]
 
 
 def decode(imageData):
-    return cv2.imdecode(np.array(imageData), cv2.CV_LOAD_IMAGE_GRAYSCALE)
+    # return cv2.imdecode(np.array(imageData), cv2.CV_LOAD_IMAGE_GRAYSCALE)
+    return cv2.imdecode(
+        np.asarray(bytearray(imageData), dtype=np.uint8),
+        cv2.CV_LOAD_IMAGE_GRAYSCALE)
 
 
 def prepare_image(filename):
