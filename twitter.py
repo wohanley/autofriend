@@ -20,7 +20,8 @@ def get_photos_from_tweet(tweet):
         if m.get('type', None) == 'photo':
             fileName = 'temp-' + str(uuid.uuid4())
             with open(fileName, 'wb') as f:
-                for chunk in requests.get(m['media_url']).iter_content():
+                for chunk in requests.get(
+                        m['media_url'] + ':large').iter_content():
                     f.write(chunk)
             photos.append(cv2.imread(fileName, cv2.CV_LOAD_IMAGE_GRAYSCALE))
             os.remove(fileName)
