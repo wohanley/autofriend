@@ -34,14 +34,20 @@ class Store():
         cursor.close()
 
         return friend
-        
+
     def save_friend(self, friend):
         cursor = self.connection.cursor()
         cursor.execute(
-            'INSERT INTO friend (twitter_id) VALUES (%s) RETURNING *',
+            'INSERT INTO friend (twitter_id) VALUES (%s) RETURNING *;',
             friend)
         self.connection.commit()
         inserted = cursor.fetchone()
         cursor.close()
 
         return inserted
+
+    def forget_friend(self, friend):
+        cursor = self.connection.cursor()
+        cursor.execute('DELETE FROM friend WHERE id = %s;', friend['id'])
+        self.connection.commit()
+        cursor.close()

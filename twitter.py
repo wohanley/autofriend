@@ -11,16 +11,19 @@ import psycopg2 as pg
 import requests
 from store import Store
 from twitterbot import TwitterBot
+import uuid
 
 
 def get_photos_from_tweet(tweet):
     photos = []
     for m in tweet.entities.get('media', []):
         if m.get('type', None) == 'photo':
-            with open('tempimg', 'wb') as f:
+            fileName = 'temp-' + str(uuid.uuid4())
+            with open(fileName, 'wb') as f:
                 for chunk in requests.get(m['media_url']).iter_content():
                     f.write(chunk)
-            photos.append(cv2.imread('tempimg', cv2.CV_LOAD_IMAGE_GRAYSCALE))
+            photos.append(cv2.imread(fileName, cv2.CV_LOAD_IMAGE_GRAYSCALE))
+            os.remove(fileName)
     return photos
 
 
@@ -83,13 +86,18 @@ class Autofriend(TwitterBot):
 
     def on_mention(self, tweet, prefix):
 
-        photos = get_photos_from_tweet(tweet)
+        if 'PLEASE FORGET ME' in tweet.text.upper():
+            self.store.forget_friend(
+                self.store.get_twitter_friend(tweet.from_user_id))
+            self.api.destroy_friendship(tweet.from_user_id)
+        else:
+            photos = get_photos_from_tweet(tweet)
 
-        prepared_images = [cv2.imdecode(photo, cv2.CV_LOAD_IMAGE_GRAYSCALE)
-                           for photo in photos]
+            prepared_images = [cv2.imdecode(photo, cv2.CV_LOAD_IMAGE_GRAYSCALE)
+                               for photo in photos]
 
-        self.face_recognizer.update([(pi, tweet.from_user_id)
-                                     for pi in prepared_images])
+            self.face_recognizer.update([(pi, tweet.from_user_id)
+                                         for pi in prepared_images])
 
     def on_timeline(self, tweet, prefix):
         """
@@ -133,7 +141,8 @@ class Autofriend(TwitterBot):
 
         for label in recognized_labels:
             recognized = self.store.get_friend(label)
-            # it's possible someone is in the model but not in the database
+            # it's possible someone is in the model but not in the database,
+            # e.g. people that asked to be forgotten
             if recognized and recognized.get('twitter_id', None):
                 twitter_friend = self.api.get_user(recognized['twitter_id'])
                 self.post_tweet(
