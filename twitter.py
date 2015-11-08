@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*- #
 
+import compliments
 import core
 import cv2
 from facerec import FaceRecognizer
@@ -148,7 +149,7 @@ class Autofriend(TwitterBot):
                 twitter_friend = self.api.get_user(recognized['twitter_id'])
                 self.post_tweet(
                     prefix +
-                    ' you look great ' +
+                    ' ' + compliments.get_compliment() + ' '
                     '@' + twitter_friend.screen_name,
                     reply_to=tweet)
 
