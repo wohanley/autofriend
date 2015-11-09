@@ -90,16 +90,16 @@ class Autofriend(TwitterBot):
 
         if 'PLEASE FORGET ME' in tweet.text.upper():
             self.store.forget_friend(
-                self.store.get_twitter_friend(tweet.from_user_id))
-            self.api.destroy_friendship(tweet.from_user_id)
+                self.store.get_twitter_friend(tweet.author.id))
+            self.api.destroy_friendship(tweet.author.id)
         else:
-            photos = get_photos_from_tweet(tweet)
-
-            prepared_images = [cv2.imdecode(photo, cv2.CV_LOAD_IMAGE_GRAYSCALE)
-                               for photo in photos]
-
-            self.face_recognizer.update([(pi, tweet.from_user_id)
-                                         for pi in prepared_images])
+            friend_id = self.store.get_or_create_twitter_friend(
+                tweet.author.id)['id']
+            face_regions = core.flatten(
+                [self.face_regions(photo) for photo in
+                 get_photos_from_tweet(tweet)])
+            self.face_recognizer.update(
+                [(face_region, friend_id) for face_region in face_regions])
 
     def on_timeline(self, tweet, prefix):
         """
@@ -124,7 +124,9 @@ class Autofriend(TwitterBot):
         face_regions = core.flatten(
             [self.face_regions(photo) for photo in photos])
 
-        print face_regions
+        print "detected faces:"
+        for region in face_regions:
+            print region
 
         recognitions = []
         for region in face_regions:
@@ -134,9 +136,11 @@ class Autofriend(TwitterBot):
             except cv2.error as e:
                 logging.error("Error recognizing face region: " + e.message)
 
-        print recognitions
+        print "possible recognitions:"
+        for recognition in recognitions:
+            print recognition
 
-        likely_recognitions = filter(lambda (_, margin): margin < 300,
+        likely_recognitions = filter(lambda (_, margin): margin < 100,
                                      recognitions)
 
         recognized_labels = set([label for (label, _) in likely_recognitions])

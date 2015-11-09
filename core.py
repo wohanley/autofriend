@@ -14,13 +14,10 @@ def load_face_detector():
 
 
 def face_regions(face_detector, image):
-
     return [image[y: y + height, x: x + width]
             for (x, y, width, height) in face_detector.detectMultiScale(
                 image,
-                scaleFactor=1.3,
-                minNeighbors=8,
-                minSize=(20, 20))]
+                minSize=(50, 50))]
 
 
 def decode(imageData):

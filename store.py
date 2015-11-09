@@ -46,6 +46,15 @@ class Store():
 
         return inserted
 
+    def get_or_create_twitter_friend(self, twitter_id):
+
+        existing = self.get_twitter_friend(twitter_id)
+
+        if existing:
+            return existing
+        else:
+            return self.save_friend((twitter_id,))
+
     def forget_friend(self, friend):
         cursor = self.connection.cursor()
         cursor.execute('DELETE FROM friend WHERE id = %s;', friend['id'])
