@@ -124,10 +124,6 @@ class Autofriend(TwitterBot):
         face_regions = core.flatten(
             [self.face_regions(photo) for photo in photos])
 
-        print "detected faces:"
-        for region in face_regions:
-            print region
-
         recognitions = []
         for region in face_regions:
             try:
@@ -135,10 +131,6 @@ class Autofriend(TwitterBot):
                     self.face_recognizer.recognize_face(region))
             except cv2.error as e:
                 logging.error("Error recognizing face region: " + e.message)
-
-        print "possible recognitions:"
-        for recognition in recognitions:
-            print recognition
 
         likely_recognitions = filter(lambda (_, margin): margin < 100,
                                      recognitions)
@@ -151,6 +143,7 @@ class Autofriend(TwitterBot):
             # e.g. people that asked to be forgotten
             if recognized and recognized.get('twitter_id', None):
                 twitter_friend = self.api.get_user(recognized['twitter_id'])
+                self.favorite_tweet(tweet)
                 self.post_tweet(
                     prefix +
                     ' ' + compliments.get_compliment() + ' '
