@@ -132,7 +132,7 @@ class Autofriend(TwitterBot):
             except cv2.error as e:
                 logging.error("Error recognizing face region: " + e.message)
 
-        likely_recognitions = filter(lambda (_, margin): margin < 100,
+        likely_recognitions = filter(lambda (_, margin): margin < 30,
                                      recognitions)
 
         recognized_labels = set([label for (label, _) in likely_recognitions])
