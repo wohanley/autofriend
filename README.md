@@ -14,3 +14,9 @@ This bot is a Hufflepuff: sweet but not the sharpest. To make it easier for it t
 2. Make sure you're the only one in the picture.
 3. Frontal shots are the easiest to deal with.
 4. The more of the frame your face takes up, the better.
+
+## Other things
+
+You can tell this bot to stop following you by tweeting "please forget me" at it.
+
+It doesn't save any of the images you send it, just looks at them, incorporates the face data it can gather into its model, and deletes them. idk if you're worried about that kind of thing but there you go.
