@@ -73,6 +73,9 @@ class Autofriend(TwitterBot):
 
         self.store = Store()
 
+    def get_confidence_level(self):
+        return os.environ['AUTOFRIEND_CONFIDENCE_LEVEL'] or 50
+
     def on_scheduled_tweet(self):
         pass
 
@@ -132,8 +135,9 @@ class Autofriend(TwitterBot):
             except cv2.error as e:
                 logging.error("Error recognizing face region: " + e.message)
 
-        likely_recognitions = filter(lambda (_, margin): margin < 50,
-                                     recognitions)
+        likely_recognitions = filter(
+            lambda (_, margin): margin < self.get_confidence_level(),
+            recognitions)
 
         recognized_labels = set([label for (label, _) in likely_recognitions])
 
@@ -146,7 +150,7 @@ class Autofriend(TwitterBot):
                 self.favorite_tweet(tweet)
                 self.post_tweet(
                     prefix +
-                    ' ' + compliments.get_compliment() + ' '
+                    ' ' + compliments.get_compliment() + ' ' +
                     '@' + twitter_friend.screen_name,
                     reply_to=tweet)
 
