@@ -74,7 +74,7 @@ class Autofriend(TwitterBot):
         self.store = Store()
 
     def get_confidence_level(self):
-        return float(os.environ.get('AUTOFRIEND_CONFIDENCE') or 50)
+        return int(os.environ.get('AUTOFRIEND_CONFIDENCE') or 50)
 
     def on_scheduled_tweet(self):
         pass
