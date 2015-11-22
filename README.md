@@ -2,7 +2,7 @@
 
 This is a bot that will like every picture it sees you in and compliment you on how good you look. Here's what you need to do to befriend it:
 
-1. Tweet it some selfies, [like so](https://twitter.com/wohanley/status/668326435552014336).
+1. Tweet it some selfies, [like so](https://twitter.com/wohanley/status/668326435552014336). If you're shy about having selfies out there, you can delete them after - just leave them up for a few minutes so the bot has a chance to see them.
 2. Follow it and it will follow you back! This can unfortunately take up to 15 minutes because of the Twitter API's rate limits, but once it's following you, it will be able to see your selfies and be nice to them.
 3. Tweet it some more selfies! The more pictures you send it, the better it will get at recognizing you.
 
@@ -10,7 +10,7 @@ This is a bot that will like every picture it sees you in and compliment you on 
 
 This bot is a Hufflepuff: sweet but not the sharpest. To make it easier for it to recognize you, you can do the following:
 
-1. Tweet *lots* of selfies at it. You'll want at least five to start with, and the more the better. You can tweet more selfies at it any time!
+1. Tweet *lots* of selfies at it. It didn't really start working for me until I had eight, and the more the better. You can tweet more selfies at it any time!
 2. Use pictures with lots of variety: different angles, lighting conditions, glasses/no glasses...
 3. Make sure you're the only one in the picture.
 4. The more of the frame your face takes up, the better.
