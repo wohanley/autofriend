@@ -103,6 +103,7 @@ class Autofriend(TwitterBot):
                  get_photos_from_tweet(tweet)])
             self.face_recognizer.update(
                 [(face_region, friend_id) for face_region in face_regions])
+            self.favorite_tweet(tweet)
 
     def on_timeline(self, tweet, prefix):
         """
