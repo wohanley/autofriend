@@ -90,8 +90,12 @@ class TwitterBot:
             self.state['last_reply_id'] = 0
             self.state['last_reply_time'] = 0
 
+            self.state['last_dm_id'] = 1
+            self.state['last_dm_time'] = 0
+
             self.state['recent_timeline'] = []
             self.state['mention_queue'] = []
+            self.state['dm_queue'] = []
 
         self.state['friends'] = self.api.friends_ids(self.id)
         self.state['followers'] = self.api.followers_ids(self.id)
@@ -176,6 +180,10 @@ class TwitterBot:
         self.state['followers'].append(f_id)
 
 
+    def on_direct_message(self):
+        raise NotImplementedError("You need to implement this to reply to direct messages (or pass if you don't want to)!")
+
+
     def post_tweet(self, text, reply_to=None, media=None):
         kwargs = {'status': text}
         args = []
@@ -209,6 +217,26 @@ class TwitterBot:
 
         except tweepy.TweepError as e:
             self._log_tweepy_error('Can\'t fav status', e)
+
+
+    def send_direct_message(self, recipient, text):
+        """
+        Send a DM.
+
+        recipient - the tweepy.User, user ID, or screen name to send the DM to
+        text - the content of the DM
+        """
+        tweepy_recipient = recipient.id if hasattr(recipient, 'id') else recipient
+
+        logging.info('Sending DM to {}: {}'.format(tweepy_recipient, text))
+
+        try:
+            self.api.send_direct_message(user=tweepy_recipient, text=text)
+            return True
+
+        except tweepy.TweepError as e:
+            self._log_tweepy_error('Can\'t send DM', e)
+            return False
 
 
     def _ignore_method(self, method):
@@ -245,6 +273,15 @@ class TwitterBot:
                 self.favorite_tweet(mention)
 
             #time.sleep(self.config['reply_interval'])
+
+
+    def _handle_direct_messages(self):
+        """
+        Performs some action on the DMs in self.dm_queue
+        """
+        for dm in iter(self.state['dm_queue']):
+            self.on_direct_message(dm)
+            self.state['dm_queue'].remove(dm)
 
 
     def get_mention_prefix(self, tweet):
@@ -345,7 +382,34 @@ class TwitterBot:
         except IncompleteRead as e:
             self.log('Incomplete read error -- skipping followers update')
 
-            
+
+    def _check_direct_messages(self):
+        """
+        Checks for DMs.
+        """
+        if self._ignore_method(self.on_direct_message):
+            logging.debug("Ignoring direct messages")
+            return
+
+        try:
+            current_dms = self.api.direct_messages(since_id=self.state['last_dm_id'], count=200)
+
+            if len(current_dms) != 0:
+                self.state['last_dm_id'] = current_dms[0].id
+
+            self.state['last_dm_time'] = time.time()
+
+            self.state['dm_queue'] += reversed(current_dms)
+
+            logging.info('DMs updated ({} retrieved, {} total in queue)'.format(len(current_dms), len(self.state['dm_queue'])))
+
+        except tweepy.TweepError as e:
+            self._log_tweepy_error('Can\'t retrieve direct messages', e)
+
+        except IncompleteRead as e:
+            self.log('Incomplete read error -- skipping DM update')
+
+
     def _handle_followers(self):
         """
         Handles new followers.
@@ -370,10 +434,10 @@ class TwitterBot:
         Runs the bot! This probably shouldn't be in a "while True" lol.
         """
         while True:
-
-            if (time.time() - self.state['last_follow_check']) > (15 * 60):
-                # this is as frequent a check as Twitter's rate limits will
-                # allow
+            
+            # check followers every 15 minutes
+            #if self.autofollow and (time.time() - self.last_follow_check) > (15 * 60): 
+            if (time.time() - self.state['last_follow_check']) > (15 * 60): 
                 self._check_followers()
                 self._handle_followers()
 
@@ -382,6 +446,11 @@ class TwitterBot:
             if (time.time() - self.state['last_mention_time']) > 60:
                 self._check_mentions()
                 self._handle_mentions()
+
+            # check DMs every minute
+            if (time.time() - self.state['last_dm_time']) > 60:
+                self._check_direct_messages()
+                self._handle_direct_messages()
 
             # tweet to timeline
             #if self.reply_to_timeline and (time.time() - self.last_mention_time) > 60:
