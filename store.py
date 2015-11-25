@@ -1,3 +1,4 @@
+import hashlib
 import os
 import psycopg2 as pg
 from psycopg2.extras import DictCursor
@@ -60,3 +61,38 @@ class Store():
         cursor.execute('DELETE FROM friend WHERE id = %s;', friend['id'])
         self.connection.commit()
         cursor.close()
+
+    def _hash_file(self, file_name):
+        with open(file_name, 'rb') as f:
+            hasher = hashlib.md5()
+            while True:
+                data = f.read(8192)
+                if not data:
+                    break
+                hasher.update(data)
+            return hasher.digest()
+
+    def remember_photo(self, photo):
+
+        cursor = self.connection.cursor()
+        cursor.execute(
+            'INSERT INTO photo_seen (hash) VALUES (%s) RETURNING *;',
+            self._hash_file(photo))
+
+        self.connection.commit()
+        result = cursor.fetchone()
+        cursor.close()
+
+        return result
+
+    def photo_seen(self, photo):
+
+        cursor = self.connection.cursor()
+        cursor.execute(
+            'SELECT FROM photo_seen WHERE hash = %s;',
+            self._hash_file(photo))
+
+        seen = cursor.fetchone() is not None
+        cursor.close()
+
+        return seen

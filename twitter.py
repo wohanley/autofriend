@@ -15,17 +15,44 @@ from twitterbot import TwitterBot
 import uuid
 
 
+def photos(tweet):
+    return filter(
+        tweet.entities.get('media', []),
+        lambda media: media.get('type', None) == 'photo')
+
+
+def photo_url(media_item):
+    return media_item['media_url'] + ':large'
+
+
+def download_file(url):
+    fileName = 'temp-' + str(uuid.uuid4())
+    with open(fileName, 'wb') as f:
+        for chunk in requests.get(url).iter_content():
+            f.write(chunk)
+    return fileName
+
+
+class DownloadedFile():
+
+    def __init__(self, url):
+        self.url = url
+
+    def __enter__(self):
+        self.fileName = download_file(self.url)
+
+    def __exit__(self):
+        os.remove(self.fileName)
+
+
 def get_photos_from_tweet(tweet):
+
     photos = []
-    for m in tweet.entities.get('media', []):
-        if m.get('type', None) == 'photo':
-            fileName = 'temp-' + str(uuid.uuid4())
-            with open(fileName, 'wb') as f:
-                for chunk in requests.get(
-                        m['media_url'] + ':large').iter_content():
-                    f.write(chunk)
-            photos.append(cv2.imread(fileName, cv2.CV_LOAD_IMAGE_GRAYSCALE))
-            os.remove(fileName)
+
+    for url in [photo_url(photo) for photo in (photos(tweet))]:
+        with DownloadedFile(url) as df:
+            photos.append(cv2.imread(df.fileName, cv2.CV_LOAD_IMAGE_GRAYSCALE))
+
     return photos
 
 
@@ -96,14 +123,22 @@ class Autofriend(TwitterBot):
                 self.store.get_twitter_friend(tweet.author.id))
             self.api.destroy_friendship(tweet.author.id)
         else:
+
             friend_id = self.store.get_or_create_twitter_friend(
                 tweet.author.id)['id']
-            face_regions = core.flatten(
-                [self.face_regions(photo) for photo in
-                 get_photos_from_tweet(tweet)])
-            self.face_recognizer.update(
-                [(face_region, friend_id) for face_region in face_regions])
-            self.favorite_tweet(tweet)
+
+            photo_urls = [photo_url(photo) for photo in photos(tweet)]
+
+            for url in photo_urls:
+                with DownloadedFile(url) as df:
+                    if not self.store.photo_seen(df.fileName):
+                        face_regions = self.face_regions(df.fileName)
+                        self.face_recognizer.update(
+                            [(face_region, friend_id)
+                             for face_region in face_regions])
+                        self.store.remember_photo(df.fileName)
+
+        self.favorite_tweet(tweet)
 
     def on_timeline(self, tweet, prefix):
         """
