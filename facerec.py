@@ -1,11 +1,14 @@
 import cv2
 import numpy as np
+import os.path
 from os.path import isfile
 
 
 class FaceRecognizer():
 
-    recognizer_path = 'resources/recognizer'
+    recognizer_path = os.path.join(
+        os.environ.get('OPENSHIFT_DATA_DIR', ''),
+        'resources/recognizer')
 
     def __init__(self):
 
