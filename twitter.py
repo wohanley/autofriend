@@ -117,6 +117,26 @@ class Autofriend(TwitterBot):
             # aborting is harmless, most likely an unfollow/refollow
             self.log("tried to add duplicate twitter friend %s" % follower_id)
 
+    def _process_photo(self, friend_id, url):
+        with DownloadedFile(url) as downloaded:
+            if not self.store.photo_seen(downloaded):
+                face_regions = self.face_regions(
+                    core.prepare_image(downloaded))
+                self.face_recognizer.update(
+                    [(face_region, friend_id)
+                     for face_region in face_regions])
+                self.store.remember_photo(downloaded)
+
+    def on_direct_message(self, dm):
+
+        media = dm.entities.get('media', [])
+        photo = media[0] if len(media) > 0 else None
+
+        if photo:
+            self._process_photo(dm.sender_id, get_photo_url(photo))
+
+        self.send_direct_message(dm.sender, compliments.get_compliment())
+
     def on_mention(self, tweet, prefix):
 
         if 'PLEASE FORGET ME' in tweet.text.upper():
@@ -131,15 +151,7 @@ class Autofriend(TwitterBot):
             photo_urls = [get_photo_url(photo) for photo in get_photos(tweet)]
 
             for url in photo_urls:
-                print url
-                with DownloadedFile(url) as downloaded:
-                    if not self.store.photo_seen(downloaded):
-                        face_regions = self.face_regions(
-                            core.prepare_image(downloaded))
-                        self.face_recognizer.update(
-                            [(face_region, friend_id)
-                             for face_region in face_regions])
-                        self.store.remember_photo(downloaded)
+                self._process_photo(friend_id, url)
 
         self.favorite_tweet(tweet)
 
