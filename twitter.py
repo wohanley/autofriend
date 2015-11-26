@@ -18,7 +18,7 @@ import uuid
 def get_photos(tweet):
     return filter(
         lambda media: media.get('type', None) == 'photo',
-        tweet.entities.get('media', []))
+        tweet.extended_entities.get('media', []))
 
 
 def get_photo_url(media_item):
@@ -129,9 +129,6 @@ class Autofriend(TwitterBot):
                 tweet.author.id)['id']
 
             photo_urls = [get_photo_url(photo) for photo in get_photos(tweet)]
-
-            print tweet.entities.get('media')
-            print photo_urls
 
             for url in photo_urls:
                 print url

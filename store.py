@@ -95,5 +95,4 @@ class Store():
         seen = cursor.fetchone() is not None
         cursor.close()
 
-        print self._hash_file(photo) + " " + ("not " if not seen else "") + "seen"
         return seen
