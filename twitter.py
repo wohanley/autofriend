@@ -15,13 +15,13 @@ from twitterbot import TwitterBot
 import uuid
 
 
-def photos(tweet):
+def get_photos(tweet):
     return filter(
-        tweet.entities.get('media', []),
-        lambda media: media.get('type', None) == 'photo')
+        lambda media: media.get('type', None) == 'photo',
+        tweet.entities.get('media', []))
 
 
-def photo_url(media_item):
+def get_photo_url(media_item):
     return media_item['media_url'] + ':large'
 
 
@@ -39,19 +39,20 @@ class DownloadedFile():
         self.url = url
 
     def __enter__(self):
-        self.fileName = download_file(self.url)
+        self._fileName = download_file(self.url)
+        return self._fileName
 
-    def __exit__(self):
-        os.remove(self.fileName)
+    def __exit__(self, exc_type, exc_value, traceback):
+        os.remove(self._fileName)
 
 
 def get_photos_from_tweet(tweet):
 
     photos = []
 
-    for url in [photo_url(photo) for photo in (photos(tweet))]:
-        with DownloadedFile(url) as df:
-            photos.append(cv2.imread(df.fileName, cv2.CV_LOAD_IMAGE_GRAYSCALE))
+    for url in [get_photo_url(photo) for photo in get_photos(tweet)]:
+        with DownloadedFile(url) as downloaded:
+            photos.append(cv2.imread(downloaded, cv2.CV_LOAD_IMAGE_GRAYSCALE))
 
     return photos
 
@@ -127,16 +128,21 @@ class Autofriend(TwitterBot):
             friend_id = self.store.get_or_create_twitter_friend(
                 tweet.author.id)['id']
 
-            photo_urls = [photo_url(photo) for photo in photos(tweet)]
+            photo_urls = [get_photo_url(photo) for photo in get_photos(tweet)]
+
+            print tweet.entities.get('media')
+            print photo_urls
 
             for url in photo_urls:
-                with DownloadedFile(url) as df:
-                    if not self.store.photo_seen(df.fileName):
-                        face_regions = self.face_regions(df.fileName)
+                print url
+                with DownloadedFile(url) as downloaded:
+                    if not self.store.photo_seen(downloaded):
+                        face_regions = self.face_regions(
+                            core.prepare_image(downloaded))
                         self.face_recognizer.update(
                             [(face_region, friend_id)
                              for face_region in face_regions])
-                        self.store.remember_photo(df.fileName)
+                        self.store.remember_photo(downloaded)
 
         self.favorite_tweet(tweet)
 

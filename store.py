@@ -70,14 +70,14 @@ class Store():
                 if not data:
                     break
                 hasher.update(data)
-            return hasher.digest()
+            return hasher.hexdigest()
 
     def remember_photo(self, photo):
 
         cursor = self.connection.cursor()
         cursor.execute(
             'INSERT INTO photo_seen (hash) VALUES (%s) RETURNING *;',
-            self._hash_file(photo))
+            (self._hash_file(photo),))
 
         self.connection.commit()
         result = cursor.fetchone()
@@ -89,10 +89,11 @@ class Store():
 
         cursor = self.connection.cursor()
         cursor.execute(
-            'SELECT FROM photo_seen WHERE hash = %s;',
-            self._hash_file(photo))
+            'SELECT * FROM photo_seen WHERE hash = %s;',
+            (self._hash_file(photo),))
 
         seen = cursor.fetchone() is not None
         cursor.close()
 
+        print self._hash_file(photo) + " " + ("not " if not seen else "") + "seen"
         return seen

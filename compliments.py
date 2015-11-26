@@ -42,8 +42,8 @@ def generate_text(start):
 
 def root():
     return weighted([
-        (1, lambda: random.choice(compliments)),
-        (0.05, lambda: "DAMN GRRRL, " + random.choice(compliments))
+        (1, random.choice(compliments)),
+        (0.05, ["DAMN GRRRL, ", random.choice(compliments)])
     ])
 
 
@@ -79,8 +79,8 @@ compliments = [
         "braid your hair",
         "objectify you",
         "paint your picture",
-        "hold your purse"
-        "do your taxes for you"
+        "hold your purse",
+        "do your taxes for you",
         "stalk you in the most non-creepy way",
         "do all your chores"]),
     lambda: "I would " + random.choice([
@@ -89,7 +89,7 @@ compliments = [
         "knit a pair of socks"]) + " for you",
     lambda: "you are " + random.choice([
         "fierce and strange",
-        "a heartbreaker"
+        "a heartbreaker",
         "more attractive than everyone you went to high school with",
         "more attractive than all of Instagram"]),
     lambda: random.choice([
