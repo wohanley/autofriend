@@ -16,9 +16,15 @@ import uuid
 
 
 def get_photos(tweet):
+
+    if hasattr(tweet, 'extended_entities'):
+        entities = tweet.extended_entities
+    else:
+        entities = tweet.entities
+
     return filter(
         lambda media: media.get('type', None) == 'photo',
-        tweet.extended_entities.get('media', []))
+        entities.get('media', []))
 
 
 def get_photo_url(media_item):
