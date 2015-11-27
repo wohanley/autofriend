@@ -77,24 +77,23 @@ compliments = [
     " " +
     random.choice([
         "braid your hair",
-        "objectify you",
         "paint your picture",
         "hold your purse",
         "do your taxes for you",
         "stalk you in the most non-creepy way",
-        "do all your chores", 
-        "send you presents", 
+        "do all your chores",
+        "send you presents",
         "make your life even more fabulous"]),
     lambda: "I would " + random.choice([
         "cut down a thousand trees",
         "murder",
-        "knit a pair of socks", 
+        "knit a pair of socks",
         "go to a family reunion"]) + " for you",
     lambda: "you are " + random.choice([
         "fierce and strange",
         "a heartbreaker",
         "more attractive than everyone you went to high school with",
-        "more attractive than all of Instagram"
+        "more attractive than all of Instagram",
         "so cool"]),
     lambda: random.choice([
         "you look",
@@ -102,14 +101,15 @@ compliments = [
     lambda: "you deserve " + random.choice([
         "a raise",
         "free wifi",
-        "freshly baked cookies", 
-        "magic and mystery", 
-        "sunshine and kisses", 
-        "fan girls and boys", 
-        "an internet community dedicated to respectfully appreciating your beauty",
-        "free healthcare", 
-        "a massage", 
-        "all the cookies in the world", 
+        "freshly baked cookies",
+        "magic and mystery",
+        "sunshine and kisses",
+        "fan girls and boys",
+        "an internet community dedicated to respectfully appreciating your" +
+        "beauty",
+        "free healthcare",
+        "a massage",
+        "all the cookies in the world",
         "respect, adoration and love"]),
     "your eyes are like the tip of a unicorn horn",
     "your body is full of magic and sparkles",
@@ -127,14 +127,14 @@ compliments = [
     "you were probably the cutest baby",
     "you are definitely not a sidekick",
     "your face would make angels weep",
-    "you'd have a sexy patronus"
-    "you are more attractive to me than my anti-anxiety meds", 
-    "you are the most clever person", 
-    "i can't decide if i want to be you or be your best friend", 
-    "i would pick you for fantasy football even if you were the worst player"
-    "i always want you on my team", 
-    "you could turn water into wine", 
-    "i want to fall asleep staring into your eyes", 
-    "if you said jump, i'd ask how high", 
-    "all my friends think you're cooler than me", 
+    "you'd have a sexy patronus",
+    "you are more attractive to me than my anti-anxiety meds",
+    "you are the most clever person",
+    "i can't decide if i want to be you or be your best friend",
+    "i would pick you for fantasy football even if you were the worst player",
+    "i always want you on my team",
+    "you could turn water into wine",
+    "i want to fall asleep staring into your eyes",
+    "if you said jump, i'd ask how high",
+    "all my friends think you're cooler than me"
 ]
