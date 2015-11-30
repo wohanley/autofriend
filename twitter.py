@@ -15,6 +15,11 @@ from twitterbot import TwitterBot
 import uuid
 
 
+def openshift_wake_up():
+    if os.environ.get('OPENSHIFT_PYTHON_IP', False):
+        requests.get('http://autofriend-wohanley.rhcloud.com/')
+
+
 def get_photos(tweet):
 
     if hasattr(tweet, 'extended_entities'):
@@ -98,6 +103,8 @@ class Autofriend(TwitterBot):
         ###########################################
         # CUSTOM: your bot's own state variables! #
         ###########################################
+
+        self.register_custom_handler(openshift_wake_up, 60 * 60 * 12)
 
         self.face_regions = partial(
             core.face_regions,
