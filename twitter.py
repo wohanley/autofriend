@@ -133,7 +133,8 @@ class Autofriend(TwitterBot):
     def _process_photo(self, friend_id, url):
         with DownloadedFile(url) as downloaded:
             if self.store.photo_seen(downloaded):
-                logging.info(friend_id + ' tried to add duplicate photo')
+                logging.info(
+                    '{} tried to add duplicate photo'.format(friend_id))
             else:
                 face_regions = self.face_regions(
                     core.prepare_image(downloaded))
