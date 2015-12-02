@@ -146,7 +146,9 @@ class Autofriend(TwitterBot):
         photo = media[0] if len(media) > 0 else None
 
         if photo:
-            self._process_photo(dm.sender_id, get_photo_url(photo))
+            friend_id = self.store.get_or_create_twitter_friend(
+                dm.author.id)['id']
+            self._process_photo(friend_id, get_photo_url(photo))
 
         self.send_direct_message(dm.sender, compliments.get_compliment())
 
